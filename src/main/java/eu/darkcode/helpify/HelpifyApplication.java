@@ -1,5 +1,6 @@
 package eu.darkcode.helpify;
 
+import eu.darkcode.helpify.database.Database;
 import eu.darkcode.helpify.discord.DiscordManager;
 import eu.darkcode.helpify.discord.SlashListener;
 import org.springframework.beans.factory.config.BeanDefinition;
@@ -20,6 +21,7 @@ public class HelpifyApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(HelpifyApplication.class, args);
+		Database.init();
 		DiscordManager.init();
 	}
 

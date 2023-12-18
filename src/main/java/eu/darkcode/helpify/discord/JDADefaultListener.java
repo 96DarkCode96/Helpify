@@ -4,6 +4,7 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.events.GenericEvent;
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
@@ -20,7 +21,8 @@ import java.util.regex.Pattern;
 
 public class JDADefaultListener extends ListenerAdapter {
 
-    private static final HashMap<String, List<Method>> methods = new HashMap<>();
+    private static final HashMap<String, List<Method>> slashListeners = new HashMap<>();
+    private static final HashMap<String, List<Method>> buttonListeners = new HashMap<>();
 
     static{
         try {
@@ -30,10 +32,10 @@ public class JDADefaultListener extends ListenerAdapter {
             for (BeanDefinition bean : classes) {
                 Class<?> clazz = Class.forName(bean.getBeanClassName());
                 for (Method method : clazz.getMethods()) {
-                    SlashListener annotation = AnnotationUtils.getAnnotation(method, SlashListener.class);
-                    if(annotation == null)
-                        continue;
-                    methods.computeIfAbsent(annotation.command(), s -> new ArrayList<>()).add(method);
+                    if(AnnotationUtils.getAnnotation(method, SlashListener.class) != null)
+                        slashListeners.computeIfAbsent(AnnotationUtils.getAnnotation(method, SlashListener.class).command(), s -> new ArrayList<>()).add(method);
+                    if(AnnotationUtils.getAnnotation(method, ButtonListener.class) != null)
+                        buttonListeners.computeIfAbsent(AnnotationUtils.getAnnotation(method, ButtonListener.class).buttonId(), s -> new ArrayList<>()).add(method);
                 }
             }
         } catch (ClassNotFoundException e) {
@@ -50,18 +52,25 @@ public class JDADefaultListener extends ListenerAdapter {
     public void onGuildReady(GuildReadyEvent event) {
         Guild guild = event.getGuild();
         guild.updateCommands().addCommands(GuildManager.generateCommands(guild.getIdLong())).queue();
-        super.onGuildReady(event);
     }
 
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
-        List<Method> methodList = methods.get(event.getName());
+        List<Method> methodList = slashListeners.get(event.getName());
         if(methodList == null)
             return;
         methodList.forEach(method -> execute(method, event));
     }
 
-    private void execute(Method method, SlashCommandInteractionEvent event) {
+    @Override
+    public void onButtonInteraction(ButtonInteractionEvent event) {
+        List<Method> methodList = buttonListeners.get(event.getButton().getId());
+        if(methodList == null)
+            return;
+        methodList.forEach(method -> execute(method, event));
+    }
+
+    private void execute(Method method, Object event) {
         try {
             method.setAccessible(true);
             if(method.getParameterCount() == 0)

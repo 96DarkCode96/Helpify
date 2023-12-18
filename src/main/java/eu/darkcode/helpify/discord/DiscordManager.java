@@ -8,17 +8,9 @@ import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
-import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
-import org.springframework.core.annotation.AnnotationUtils;
-import org.springframework.core.type.filter.RegexPatternTypeFilter;
 
-import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
-import java.util.regex.Pattern;
 
 public class DiscordManager {
 
@@ -36,7 +28,7 @@ public class DiscordManager {
                 .enableCache(CacheFlag.VOICE_STATE)
                 .setAutoReconnect(true)
                 .addEventListeners(new JDADefaultListener())
-                .setActivity(Activity.playing("/helpify | matejtomecek.eu/helpify"))
+                .setActivity(Activity.playing("/helpify | helpify.matejtomecek.eu"))
                 .build();
         try {
             jda.awaitReady();
