@@ -7,11 +7,10 @@ import java.util.HashMap;
 public enum ModuleStatus {
     UNKNOWN(-1, "Unknown"),
     WAITING(0, "Waiting for request :hourglass:"),
-    AVAILABLE(1, "Available :grey_question:"),
-    ENABLED(2, "Enabled :white_check_mark:"),
-    DISABLED(3, "Disabled :x:"),
-    REQUESTED(4, "Requested :thought_balloon:"),
-    BLOCKED(5, "Blocked :no_entry:");
+    ENABLED(1, "Enabled :white_check_mark:"),
+    DISABLED(2, "Disabled :x:"),
+    REQUESTED(3, "Requested :thought_balloon:"),
+    BLOCKED(4, "Blocked :no_entry:");
 
     public static @NotNull ModuleStatus fromId(int id){
         return fromId.getOrDefault(id, UNKNOWN);

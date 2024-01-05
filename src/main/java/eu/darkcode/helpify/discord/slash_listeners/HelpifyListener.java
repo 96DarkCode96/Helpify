@@ -20,6 +20,7 @@ public class HelpifyListener {
 
     static{
         helpLists.put(1, "**HELPIFY**\nCreated by ***96DarkCode96***\n\n**/helpify**\n> Basic info about bot and available commands!\n\n**/modules**\n> Show all modules available at your guild!\n> *GUILD ONLY*");
+        helpLists.put(2, "**Module - Voting** | *GUILD ONLY*\n\n**/voting <type>**\n> Enter voting creation mode!\n> *Enters persistent creation mode for voting of your type!*\n> *If you want to start another, first you have to publish or delete current voting that is being created!*\n\n**/resend-voting**\n> Resends deleted voting message!");
     }
 
     @SlashListener(command="helpify")

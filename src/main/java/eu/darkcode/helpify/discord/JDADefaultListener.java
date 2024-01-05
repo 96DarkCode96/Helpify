@@ -3,8 +3,10 @@ package eu.darkcode.helpify.discord;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.events.GenericEvent;
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
+import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
@@ -23,6 +25,8 @@ public class JDADefaultListener extends ListenerAdapter {
 
     private static final HashMap<String, List<Method>> slashListeners = new HashMap<>();
     private static final HashMap<String, List<Method>> buttonListeners = new HashMap<>();
+    private static final HashMap<String, List<Method>> modalListeners = new HashMap<>();
+    private static final HashMap<String, List<Method>> stringSelectListeners = new HashMap<>();
 
     static{
         try {
@@ -36,16 +40,15 @@ public class JDADefaultListener extends ListenerAdapter {
                         slashListeners.computeIfAbsent(AnnotationUtils.getAnnotation(method, SlashListener.class).command(), s -> new ArrayList<>()).add(method);
                     if(AnnotationUtils.getAnnotation(method, ButtonListener.class) != null)
                         buttonListeners.computeIfAbsent(AnnotationUtils.getAnnotation(method, ButtonListener.class).buttonId(), s -> new ArrayList<>()).add(method);
+                    if(AnnotationUtils.getAnnotation(method, ModalListener.class) != null)
+                        modalListeners.computeIfAbsent(AnnotationUtils.getAnnotation(method, ModalListener.class).modalId(), s -> new ArrayList<>()).add(method);
+                    if(AnnotationUtils.getAnnotation(method, StringSelectListener.class) != null)
+                        stringSelectListeners.computeIfAbsent(AnnotationUtils.getAnnotation(method, StringSelectListener.class).componentId(), s -> new ArrayList<>()).add(method);
                 }
             }
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    @Override
-    public void onGenericEvent(GenericEvent event) {
-        super.onGenericEvent(event);
     }
 
     @Override
@@ -65,6 +68,22 @@ public class JDADefaultListener extends ListenerAdapter {
     @Override
     public void onButtonInteraction(ButtonInteractionEvent event) {
         List<Method> methodList = buttonListeners.get(event.getButton().getId());
+        if(methodList == null)
+            return;
+        methodList.forEach(method -> execute(method, event));
+    }
+
+    @Override
+    public void onModalInteraction(ModalInteractionEvent event) {
+        List<Method> methodList = modalListeners.get(event.getModalId());
+        if(methodList == null)
+            return;
+        methodList.forEach(method -> execute(method, event));
+    }
+
+    @Override
+    public void onStringSelectInteraction(StringSelectInteractionEvent event) {
+        List<Method> methodList = stringSelectListeners.get(event.getComponentId());
         if(methodList == null)
             return;
         methodList.forEach(method -> execute(method, event));
