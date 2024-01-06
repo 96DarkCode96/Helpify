@@ -7,6 +7,8 @@ import eu.darkcode.helpify.discord.modules.Module;
 import eu.darkcode.helpify.discord.modules.ModuleStatus;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
@@ -145,18 +147,68 @@ public class ModulesListener {
                             .build()).setEphemeral(true).queue();
                     return;
                 }
-                if(!Database.changeModuleStatus(event.getGuild().getIdLong(), module, ModuleStatus.REQUESTED)){
-                    event.replyEmbeds(new EmbedBuilder()
-                            .setDescription("> Failed to send request! Try it again later!")
-                            .setColor(Color.red)
-                            .build()).setEphemeral(true).queue();
+                event.deferReply(true).queue();
+                Long guildID = Database.getSetting("admin.guild", null, Long::parseLong);
+                if(guildID == null){
+                    event.getHook().editOriginalEmbeds(new EmbedBuilder()
+                            .setDescription("> Failed to send request! Try it again later! (Err. 1)").setColor(Color.red)
+                            .build()).queue();
                     return;
                 }
-                event.replyEmbeds(new EmbedBuilder()
+                Long channelID = Database.getSetting("admin.channel.moduleRequest", null, Long::parseLong);
+                if(channelID == null){
+                    event.getHook().editOriginalEmbeds(new EmbedBuilder()
+                            .setDescription("> Failed to send request! Try it again later! (Err. 2)").setColor(Color.red)
+                            .build()).queue();
+                    return;
+                }
+                Guild adminGuild = event.getJDA().getGuildById(guildID);
+                if(adminGuild == null){
+                    event.getHook().editOriginalEmbeds(new EmbedBuilder()
+                            .setDescription("> Failed to send request! Try it again later! (Err. 3)").setColor(Color.red)
+                            .build()).queue();
+                    return;
+                }
+                TextChannel channel = adminGuild.getTextChannelById(channelID);
+                if(channel == null || !channel.canTalk(adminGuild.getSelfMember())){
+                    event.getHook().editOriginalEmbeds(new EmbedBuilder()
+                            .setDescription("> Failed to send request! Try it again later! (Err. 4)").setColor(Color.red)
+                            .build()).queue();
+                    return;
+                }
+                if(!Database.changeModuleStatus(event.getGuild().getIdLong(), module, ModuleStatus.REQUESTED)){
+                    event.getHook().editOriginalEmbeds(new EmbedBuilder()
+                            .setDescription("> Failed to send request! Try it again later! (Err. 5)").setColor(Color.red)
+                            .build()).queue();
+                    return;
+                }
+                Member owner = event.getGuild().getOwner();
+                if(owner == null){
+                    event.getHook().editOriginalEmbeds(new EmbedBuilder()
+                            .setDescription("> Failed to send request! Try it again later! (Err. 6)").setColor(Color.red)
+                            .build()).queue();
+                    return;
+                }
+                channel.sendMessageEmbeds(new EmbedBuilder()
+                        .setTitle( "Module '"+module.getMessage()+"' requested!")
+                        .addField("GuildID", String.valueOf(event.getGuild().getIdLong()), true)
+                        .addField("GuildName", event.getGuild().getName(), true)
+                        .addField("---", "", false)
+                        .addField("Members", String.valueOf(event.getGuild().retrieveMetaData().complete().getApproximateMembers()), true)
+                        .addField("Created", "<t:" + event.getGuild().getTimeCreated().toEpochSecond() + ">", true)
+                        .addField("---", "", false)
+                        .addField("OwnerID", event.getGuild().getOwnerId(), true)
+                        .addField("OwnerName", owner.getEffectiveName(), true)
+                        .addField("---", "", false)
+                        .addField("RequesterID", event.getUser().getId(), true)
+                        .addField("RequesterName",event.getUser().getEffectiveName(), true)
+                        .setThumbnail(event.getGuild().getIconUrl())
+                        .setColor(Color.white)
+                        .build()).queue();
+                event.getHook().editOriginalEmbeds(new EmbedBuilder()
                         .setDescription("> Successfully sent a request for enabling module *" + module.getMessage() + "*\n> Admin was notified! Please wait, he has life too :heart:")
                         .setColor(Color.green)
-                        .build()).setEphemeral(true).queue();
-                //TODO
+                        .build()).queue();
                 break;
             }
             default:
