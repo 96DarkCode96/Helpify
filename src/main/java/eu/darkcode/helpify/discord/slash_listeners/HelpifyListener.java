@@ -1,8 +1,8 @@
 package eu.darkcode.helpify.discord.slash_listeners;
 
-import eu.darkcode.helpify.discord.ButtonListener;
+import eu.darkcode.helpify.discord.annotations.ButtonListener;
 import eu.darkcode.helpify.discord.DiscordManager;
-import eu.darkcode.helpify.discord.SlashListener;
+import eu.darkcode.helpify.discord.annotations.SlashListener;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -19,8 +19,33 @@ public class HelpifyListener {
     private static final HashMap<Integer, String> helpLists = new HashMap<>();
 
     static{
-        helpLists.put(1, "**HELPIFY**\nCreated by ***96DarkCode96***\n\n**/helpify**\n> Basic info about bot and available commands!\n\n**/modules**\n> Show all modules available at your guild!\n> *GUILD ONLY*");
-        helpLists.put(2, "**Module - Voting** | *GUILD ONLY*\n\n**/voting <type>**\n> Enter voting creation mode!\n> *Enters persistent creation mode for voting of your type!*\n> *If you want to start another, first you have to publish or delete current voting that is being created!*\n\n**/resend-voting**\n> Resends deleted voting message!");
+        helpLists.put(1, """
+                **HELPIFY**
+                Created by ***96DarkCode96***
+
+                **/helpify**
+                > Basic info about bot and available commands!
+
+                **/modules**
+                > Show all modules available at your guild!
+                > *GUILD ONLY*
+
+                **/module**
+                > *status of* - gets the status of module
+                > *enable* - enables module
+                > *disable* - disables module
+                > *request for* - sends a request for making module available for your guild
+                > *GUILD ONLY*""");
+        helpLists.put(2, """
+                **Module - Voting** | *GUILD ONLY*
+
+                **/voting <type>**
+                > Enter voting creation mode!
+                > *Enters persistent creation mode for voting of your type!*
+                > *If you want to start another, first you have to publish or delete current voting that is being created!*
+
+                **/resend-voting**
+                > Resends deleted voting message!""");
     }
 
     @SlashListener(command="helpify")

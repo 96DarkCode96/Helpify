@@ -1,4 +1,4 @@
-package eu.darkcode.helpify.discord;
+package eu.darkcode.helpify.discord.annotations;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -8,6 +8,6 @@ import static java.lang.annotation.ElementType.METHOD;
 
 @Target({ METHOD })
 @Retention(RetentionPolicy.RUNTIME)
-public @interface StringSelectListener {
-    String componentId();
+public @interface ModalListeners {
+    ModalListener[] value();
 }

@@ -1,14 +1,13 @@
 package eu.darkcode.helpify.discord.slash_listeners;
 
 import eu.darkcode.helpify.database.Database;
-import eu.darkcode.helpify.discord.ButtonListener;
-import eu.darkcode.helpify.discord.ModalListener;
-import eu.darkcode.helpify.discord.SlashListener;
-import eu.darkcode.helpify.discord.StringSelectListener;
+import eu.darkcode.helpify.discord.annotations.ButtonListener;
+import eu.darkcode.helpify.discord.annotations.ModalListener;
+import eu.darkcode.helpify.discord.annotations.SlashListener;
+import eu.darkcode.helpify.discord.annotations.StringSelectListener;
 import eu.darkcode.helpify.discord.modules.Module;
 import eu.darkcode.helpify.discord.modules.ModuleStatus;
 import eu.darkcode.helpify.discord.voting.Voting;
-import eu.darkcode.helpify.discord.voting.VotingManager;
 import eu.darkcode.helpify.discord.voting.VotingType;
 import eu.darkcode.helpify.discord.wrappers.GuildWrapper;
 import eu.darkcode.helpify.objects.StringUtil;
@@ -27,12 +26,9 @@ import net.dv8tion.jda.api.interactions.modals.Modal;
 import net.dv8tion.jda.api.interactions.modals.ModalMapping;
 
 import java.awt.*;
-import java.net.URI;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.LongConsumer;
 
 import static eu.darkcode.helpify.discord.voting.Voting.*;
 

@@ -1,7 +1,10 @@
 package eu.darkcode.helpify.discord;
 
+import eu.darkcode.helpify.discord.annotations.ButtonListener;
+import eu.darkcode.helpify.discord.annotations.ModalListener;
+import eu.darkcode.helpify.discord.annotations.SlashListener;
+import eu.darkcode.helpify.discord.annotations.StringSelectListener;
 import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.events.GenericEvent;
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -10,7 +13,6 @@ import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionE
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
-import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.type.filter.RegexPatternTypeFilter;
 
 import java.lang.reflect.InvocationTargetException;
@@ -36,14 +38,14 @@ public class JDADefaultListener extends ListenerAdapter {
             for (BeanDefinition bean : classes) {
                 Class<?> clazz = Class.forName(bean.getBeanClassName());
                 for (Method method : clazz.getMethods()) {
-                    if(AnnotationUtils.getAnnotation(method, SlashListener.class) != null)
-                        slashListeners.computeIfAbsent(AnnotationUtils.getAnnotation(method, SlashListener.class).command(), s -> new ArrayList<>()).add(method);
-                    if(AnnotationUtils.getAnnotation(method, ButtonListener.class) != null)
-                        buttonListeners.computeIfAbsent(AnnotationUtils.getAnnotation(method, ButtonListener.class).buttonId(), s -> new ArrayList<>()).add(method);
-                    if(AnnotationUtils.getAnnotation(method, ModalListener.class) != null)
-                        modalListeners.computeIfAbsent(AnnotationUtils.getAnnotation(method, ModalListener.class).modalId(), s -> new ArrayList<>()).add(method);
-                    if(AnnotationUtils.getAnnotation(method, StringSelectListener.class) != null)
-                        stringSelectListeners.computeIfAbsent(AnnotationUtils.getAnnotation(method, StringSelectListener.class).componentId(), s -> new ArrayList<>()).add(method);
+                    for (ButtonListener listener : method.getAnnotationsByType(ButtonListener.class))
+                        buttonListeners.computeIfAbsent(listener.buttonId(), s -> new ArrayList<>()).add(method);
+                    for (SlashListener listener : method.getAnnotationsByType(SlashListener.class))
+                        slashListeners.computeIfAbsent(listener.command(), s -> new ArrayList<>()).add(method);
+                    for (ModalListener listener : method.getAnnotationsByType(ModalListener.class))
+                        modalListeners.computeIfAbsent(listener.modalId(), s -> new ArrayList<>()).add(method);
+                    for (StringSelectListener listener : method.getAnnotationsByType(StringSelectListener.class))
+                        stringSelectListeners.computeIfAbsent(listener.componentId(), s -> new ArrayList<>()).add(method);
                 }
             }
         } catch (ClassNotFoundException e) {

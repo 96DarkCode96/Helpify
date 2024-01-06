@@ -1,22 +1,145 @@
 package eu.darkcode.helpify.discord.slash_listeners;
 
 import eu.darkcode.helpify.database.Database;
+import eu.darkcode.helpify.discord.annotations.ButtonListener;
 import eu.darkcode.helpify.discord.GuildManager;
-import eu.darkcode.helpify.discord.SlashListener;
+import eu.darkcode.helpify.discord.annotations.SlashListener;
 import eu.darkcode.helpify.discord.modules.Module;
 import eu.darkcode.helpify.discord.modules.ModuleStatus;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
+import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 
 import java.awt.*;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
 
 public class ModulesListener {
+
+    @ButtonListener(buttonId = "module_request_accept")
+    @ButtonListener(buttonId = "module_request_deny")
+    public static void moduleRequestAcceptDeny(ButtonInteractionEvent event){
+        if(!event.isFromGuild()){
+            event.replyEmbeds(new EmbedBuilder().setTitle("> Internal error (Err. 1)").setColor(Color.red).build()).queue();
+            return;
+        }
+        List<MessageEmbed> embeds = event.getMessage().getEmbeds();
+        if(embeds.isEmpty()){
+            event.replyEmbeds(new EmbedBuilder().setTitle("> Internal error (Err. 2)").setColor(Color.red).build()).queue();
+            return;
+        }
+        MessageEmbed messageEmbed = embeds.get(0);
+        Long guildId = messageEmbed.getFields().stream()
+                    .filter(a -> Objects.equals(a.getName(), "GuildID"))
+                    .map(a -> Long.parseLong(Objects.requireNonNull(a.getValue())))
+                    .findFirst().orElse(null);
+        if(guildId == null) {
+            event.replyEmbeds(new EmbedBuilder().setTitle("> Internal error (Err. 3)").setColor(Color.red).build()).queue();
+            return;
+        }
+
+        String guildName = messageEmbed.getFields().stream()
+                .filter(a -> Objects.equals(a.getName(), "GuildName")).map(a -> String.valueOf(a.getValue())).findFirst().orElse(null);
+        if(guildName == null) {
+            event.replyEmbeds(new EmbedBuilder().setTitle("> Internal error (Err. 4)").setColor(Color.red).build()).queue();
+            return;
+        }
+
+        Module module = messageEmbed.getFields().stream()
+                .filter(a -> Objects.equals(a.getName(), "ModuleID"))
+                .map(a -> Module.fromId(Integer.parseInt(Objects.requireNonNull(a.getValue()))))
+                .findFirst().orElse(null);
+        if(module == null || module.equals(Module.UNKNOWN)) {
+            event.replyEmbeds(new EmbedBuilder().setTitle("> Internal error (Err. 5)").setColor(Color.red).build()).queue();
+            return;
+        }
+
+        Long requesterId = messageEmbed.getFields().stream()
+                .filter(a -> Objects.equals(a.getName(), "RequesterID"))
+                .map(a -> Long.parseLong(Objects.requireNonNull(a.getValue())))
+                .findFirst().orElse(null);
+        if(requesterId == null) {
+            event.replyEmbeds(new EmbedBuilder().setTitle("> Internal error (Err. 6)").setColor(Color.red).build()).queue();
+            return;
+        }
+
+        String requesterName = messageEmbed.getFields().stream()
+                .filter(a -> Objects.equals(a.getName(), "RequesterName")).map(a -> String.valueOf(a.getValue())).findFirst().orElse(null);
+        if(requesterName == null) {
+            event.replyEmbeds(new EmbedBuilder().setTitle("> Internal error (Err. 7)").setColor(Color.red).build()).queue();
+            return;
+        }
+
+        Long ownerId = messageEmbed.getFields().stream()
+                .filter(a -> Objects.equals(a.getName(), "OwnerID"))
+                .map(a -> Long.parseLong(Objects.requireNonNull(a.getValue())))
+                .findFirst().orElse(null);
+        if(ownerId == null) {
+            event.replyEmbeds(new EmbedBuilder().setTitle("> Internal error (Err. 8)").setColor(Color.red).build()).queue();
+            return;
+        }
+
+        boolean isAccept = event.getComponentId().equals("module_request_accept");
+
+        if (!Database.changeModuleStatus(guildId, module, isAccept ? ModuleStatus.DISABLED : ModuleStatus.BLOCKED)) {
+            event.replyEmbeds(new EmbedBuilder().setTitle("> Internal error (Err. 9)").setColor(Color.red).build()).queue();
+            return;
+        }
+
+        event.deferEdit().queue();
+        event.getHook().editOriginalComponents(ActionRow.of((isAccept ? Button.success("noID", "ACCEPTED") : Button.danger("noID", "DENIED")))
+                .asDisabled()).queue();
+
+        if(isAccept){
+            if(!requesterId.equals(ownerId)){
+                EmbedBuilder ownerMsg = new EmbedBuilder();
+                if(messageEmbed.getThumbnail() != null)
+                    ownerMsg.setThumbnail(messageEmbed.getThumbnail().getUrl());
+                ownerMsg.setTitle("> Request was approved!").setColor(Color.green)
+                        .addField("GuildID", String.valueOf(guildId), true)
+                        .addField("GuildName", "`" + guildName + "`", true)
+                        .addField("---", "", false)
+                        .addField("RequesterID", String.valueOf(requesterId), true)
+                        .addField("RequesterName", "`" + requesterName + "`", true)
+                        .addField("---", "", false)
+                        .addField("Approved by", "`" + event.getUser().getName() + "` (" + event.getUser().getId() + ")", true)
+                        .addField("Module", module.getMessage(), true);
+                event.getJDA().openPrivateChannelById(ownerId).flatMap(channel -> channel.sendMessageEmbeds(ownerMsg.build())).queue(e -> {}, (t) -> {});
+            }
+            EmbedBuilder requesterMsg = new EmbedBuilder();
+            if(messageEmbed.getThumbnail() != null)
+                requesterMsg.setThumbnail(messageEmbed.getThumbnail().getUrl());
+            requesterMsg.setTitle("> Your request was approved!").setDescription("Now you can enable module using: ```/module enable " + module.getMessage() + "```")
+                    .setColor(Color.green)
+                    .addField("GuildID", String.valueOf(guildId), true)
+                    .addField("GuildName", "`" + guildName + "`", true)
+                    .addField("---", "", false)
+                    .addField("Approved by", "`" + event.getUser().getName() + "` (" + event.getUser().getId() + ")", true)
+                    .addField("Module", module.getMessage(), true);
+            event.getJDA().openPrivateChannelById(requesterId).flatMap(channel -> channel.sendMessageEmbeds(requesterMsg.build())).queue(e -> {}, (t) -> {});
+            return;
+        }
+        EmbedBuilder requesterMsg = new EmbedBuilder();
+        if(messageEmbed.getThumbnail() != null)
+            requesterMsg.setThumbnail(messageEmbed.getThumbnail().getUrl());
+        requesterMsg.setTitle("> Your request was denied!")
+                .setDescription("Something about you or guild was not all right.\nYou can try it again after unblock wave or contact administrator!")
+                .setColor(Color.red)
+                .addField("GuildID", String.valueOf(guildId), true)
+                .addField("GuildName", "`" + guildName + "`", true)
+                .addField("---", "", false)
+                .addField("Denied by", "`" + event.getUser().getName() + "` (" + event.getUser().getId() + ")", true)
+                .addField("Module", module.getMessage(), true);
+        event.getJDA().openPrivateChannelById(requesterId).flatMap(channel -> channel.sendMessageEmbeds(requesterMsg.build())).queue(e -> {}, (t) -> {});
+    }
 
     @SlashListener(command = "modules")
     public static void listenModules(SlashCommandInteractionEvent event){
@@ -176,37 +299,41 @@ public class ModulesListener {
                             .build()).queue();
                     return;
                 }
-                if(!Database.changeModuleStatus(event.getGuild().getIdLong(), module, ModuleStatus.REQUESTED)){
+                Member owner = event.getGuild().retrieveOwner().complete();
+                if(owner == null){
                     event.getHook().editOriginalEmbeds(new EmbedBuilder()
                             .setDescription("> Failed to send request! Try it again later! (Err. 5)").setColor(Color.red)
                             .build()).queue();
                     return;
                 }
-                Member owner = event.getGuild().getOwner();
-                if(owner == null){
+                if(!Database.changeModuleStatus(event.getGuild().getIdLong(), module, ModuleStatus.REQUESTED)){
                     event.getHook().editOriginalEmbeds(new EmbedBuilder()
                             .setDescription("> Failed to send request! Try it again later! (Err. 6)").setColor(Color.red)
                             .build()).queue();
                     return;
                 }
                 channel.sendMessageEmbeds(new EmbedBuilder()
-                        .setTitle( "Module '"+module.getMessage()+"' requested!")
+                        .setTitle( "Module requested!")
                         .addField("GuildID", String.valueOf(event.getGuild().getIdLong()), true)
-                        .addField("GuildName", event.getGuild().getName(), true)
+                        .addField("GuildName", "`" + event.getGuild().getName() + "`", true)
+                        .addField("---", "", false)
+                        .addField("ModuleID", String.valueOf(module.getId()), true)
+                        .addField("ModuleName", module.getMessage(), true)
                         .addField("---", "", false)
                         .addField("Members", String.valueOf(event.getGuild().retrieveMetaData().complete().getApproximateMembers()), true)
                         .addField("Created", "<t:" + event.getGuild().getTimeCreated().toEpochSecond() + ">", true)
                         .addField("---", "", false)
                         .addField("OwnerID", event.getGuild().getOwnerId(), true)
-                        .addField("OwnerName", owner.getEffectiveName(), true)
+                        .addField("OwnerName", "`" + owner.getUser().getName() + "`", true)
                         .addField("---", "", false)
                         .addField("RequesterID", event.getUser().getId(), true)
-                        .addField("RequesterName",event.getUser().getEffectiveName(), true)
+                        .addField("RequesterName", "`" + event.getUser().getName() + "`", true)
                         .setThumbnail(event.getGuild().getIconUrl())
                         .setColor(Color.white)
-                        .build()).queue();
+                        .build()).addActionRow(Button.success("module_request_accept", "ACCEPT"), Button.danger("module_request_deny", "DENY")).queue();
                 event.getHook().editOriginalEmbeds(new EmbedBuilder()
-                        .setDescription("> Successfully sent a request for enabling module *" + module.getMessage() + "*\n> Admin was notified! Please wait, he has life too :heart:")
+                        .setDescription("> Successfully sent a request for enabling module *" + module.getMessage() +
+                                "*\n> Admin was notified! Please wait, he has life too :heart:")
                         .setColor(Color.green)
                         .build()).queue();
                 break;
