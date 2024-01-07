@@ -67,7 +67,9 @@ public class HelpifyListener {
     @ButtonListener(buttonId="helpifyButton2")
     public static void button2(ButtonInteractionEvent event){
         event.deferEdit().queue();
-        int page = Integer.parseInt(event.getMessage().getButtonById("helpifyButton3").getLabel().split(" / ")[0]) - 1;
+        Button helpifyButton3 = event.getMessage().getButtonById("helpifyButton3");
+        assert helpifyButton3 != null;
+        int page = Integer.parseInt(helpifyButton3.getLabel().split(" / ")[0]) - 1;
         event.getHook().editOriginalEmbeds(generateMessage(page))
                 .setActionRow(generateHelpButtons(page, helpLists.size()))
                 .queue();
@@ -82,7 +84,9 @@ public class HelpifyListener {
     @ButtonListener(buttonId="helpifyButton4")
     public static void button4(ButtonInteractionEvent event){
         event.deferEdit().queue();
-        int page = Integer.parseInt(event.getMessage().getButtonById("helpifyButton3").getLabel().split(" / ")[0]) + 1;
+        Button helpifyButton3 = event.getMessage().getButtonById("helpifyButton3");
+        assert helpifyButton3 != null;
+        int page = Integer.parseInt(helpifyButton3.getLabel().split(" / ")[0]) + 1;
         event.getHook().editOriginalEmbeds(generateMessage(page))
                 .setActionRow(generateHelpButtons(page, helpLists.size()))
                 .queue();

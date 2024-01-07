@@ -1,6 +1,5 @@
 package eu.darkcode.helpify.discord.modules;
 
-import net.dv8tion.jda.api.interactions.commands.Command;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;

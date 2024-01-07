@@ -1,7 +1,5 @@
 package eu.darkcode.helpify.discord.annotations;
 
-import org.springframework.core.annotation.AliasFor;
-
 import java.lang.annotation.*;
 
 import static java.lang.annotation.ElementType.METHOD;
