@@ -16,10 +16,10 @@ public class Database {
 
     private static Connection connection;
 
-    public static void init(){
+    public static void init(String databaseUrl, String databaseUser, String databasePasswd){
         try {
             Class.forName("org.mariadb.jdbc.Driver");
-            connection = DriverManager.getConnection("jdbc:mariadb://192.168.1.46:9003/helpify", "helpify", "Helpify12#13#45#awd#127389");
+            connection = DriverManager.getConnection(databaseUrl, databaseUser, databasePasswd);
         } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException(e);
         }

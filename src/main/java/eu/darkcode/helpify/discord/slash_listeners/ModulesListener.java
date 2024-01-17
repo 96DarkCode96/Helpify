@@ -214,7 +214,7 @@ public class ModulesListener {
                         .setColor(Color.green)
                         .build()).setEphemeral(true).queue();
                 guild.updateCommands().addCommands(GuildManager.generateCommands(guild.getIdLong())).queue();
-                //TODO
+                //TODO properly enable each module
                 break;
             }
             case "disable": {
@@ -244,7 +244,7 @@ public class ModulesListener {
                         .setColor(Color.gray)
                         .build()).setEphemeral(true).queue();
                 guild.updateCommands().addCommands(GuildManager.generateCommands(guild.getIdLong())).queue();
-                //TODO
+                //TODO properly disable each module
                 break;
             }
             case "request": {

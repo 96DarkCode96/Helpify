@@ -1,6 +1,5 @@
 package eu.darkcode.helpify.discord;
 
-import eu.darkcode.helpify.objects.Tokens;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
@@ -16,8 +15,8 @@ public class DiscordManager {
 
     private static JDA jda;
 
-    public static void init(){
-        jda = JDABuilder.createDefault(Tokens.DISCORD_TOKEN)
+    public static void init(String botToken){
+        jda = JDABuilder.createDefault(botToken)
                 .enableIntents(GatewayIntent.DIRECT_MESSAGES,
                         GatewayIntent.DIRECT_MESSAGE_REACTIONS,
                         GatewayIntent.GUILD_MEMBERS,

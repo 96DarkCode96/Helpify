@@ -11,9 +11,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class HelpifyApplication {
 
 	public static void main(String[] args) {
+		if(args.length != 4){
+			System.out.println("java -jar helpify.jar <dbUrl> <dbUser> <dbPassword> <botToken>");
+			System.exit(-1);
+		}
 		SpringApplication.run(HelpifyApplication.class, args);
-		Database.init();
-		DiscordManager.init();
+		Database.init(args[0], args[1], args[2]);
+		DiscordManager.init(args[3]);
 	}
 
 }
