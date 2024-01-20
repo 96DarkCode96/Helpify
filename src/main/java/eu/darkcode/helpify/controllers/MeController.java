@@ -1,16 +1,17 @@
 package eu.darkcode.helpify.controllers;
 
+import eu.darkcode.helpify.database.Database;
 import eu.darkcode.helpify.discord.DiscordManager;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.SelfUser;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
+@SuppressWarnings("unused")
 @RestController()
 @RequestMapping("/@me")
 public class MeController {
@@ -43,6 +44,39 @@ public class MeController {
                 return map;
             }).toList());
         }catch(Throwable ignored){
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @GetMapping("/guilds/activated")
+    public ResponseEntity<Object> guild(@RequestBody() String body) {
+        try{
+            HashMap<String, Object> result = new HashMap<>();
+            Arrays.stream(body.split(";"))
+                    .mapToLong(Long::parseLong)
+                    .forEach(guildId -> result.put(String.valueOf(guildId), getDataOfGuild(guildId)));
+            return ResponseEntity.ok(result);
+        }catch(Throwable e){
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    private Object getDataOfGuild(long guildId){
+        Guild guild = DiscordManager.getJDA().getGuildById(guildId);
+        if(guild == null)
+            return null;
+        HashMap<String,Object> map = new HashMap<>();
+        map.put("id", guild.getIdLong());
+        map.put("name", guild.getName());
+        map.put("modules", Database.fetchModules(guildId));
+        return map;
+    }
+
+    @GetMapping("/guild/{guildId}")
+    public ResponseEntity<Object> guild(@PathVariable(name = "guildId") long guildId) {
+        try{
+            return ResponseEntity.ofNullable(getDataOfGuild(guildId));
+        }catch(Throwable e){
             return ResponseEntity.internalServerError().build();
         }
     }
